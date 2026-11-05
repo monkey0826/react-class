@@ -1,121 +1,94 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+
+import { useState, useMemo, useCallback, useContext, useEffect } from 'react'
 import './App.css'
+import Header from './Header.jsx'
+import StudentList from './studentList.jsx'
+import { ThemeContext } from './ThemeContext.jsx'
+
+const students = [
+  { id: 1, name: '김민수', major: '멀티미디어', score: 85 },
+  { id: 2, name: '이영희', major: '컴퓨터공학', score: 92 },
+  { id: 3, name: '박지훈', major: '멀티미디어', score: 76 },
+  { id: 4, name: '최유진', major: '컴퓨터공학', score: 88 },
+  { id: 5, name: '정현우', major: '멀티미디어', score: 95 }
+]
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [search, setSearch] = useState('')
+  const [majorSearch, setMajorSearch] = useState('')
+
+  const { theme } = useContext(ThemeContext)
+
+  const filteredStudents = useMemo(() => {
+    return students.filter((student) =>
+      student.name.includes(search) &&
+      student.major.includes(majorSearch)
+    )
+  }, [search, majorSearch])
+
+  const averageScore = useMemo(() => {
+    if (filteredStudents.length === 0) {
+      return 0
+    }
+
+    const total = filteredStudents.reduce(
+      (sum, student) => sum + student.score, 0
+    )
+
+    return Math.round(total / filteredStudents.length)
+  }, [filteredStudents])
+
+  const clearSearch = useCallback(() => {
+    setSearch('')
+    setMajorSearch('')
+  }, [])
+
+  useEffect(()=> {
+    fetch('/student.json')
+    .then((Response) => Response.json())
+    .then((data)=>setStudents(data.student))
+    .catch((error)=> console.error('false',error))
+  },)
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <main
+      className={
+        theme === 'light' ? 'page light' : 'page dark'
+      }
+    >
+      <Header />
+
+      <section className="search-box">
+        <label >학생 이름 검색</label>
+        <div className="search-row">
+          <input
+            id="name-search"
+            type="text"
+            placeholder="학생 이름 입력"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+
+        <label >전공 검색</label>
+        <div className="search-row">
+          <input
+            id="major-search"
+            type="text"
+            placeholder="전공 입력"
+            value={majorSearch}
+            onChange={(e) => setMajorSearch(e.target.value)}
+          />
+          <button onClick={clearSearch}>검색 초기화</button>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+
+        <p className="search-result">
+          검색 결과 {filteredStudents.length}명 · 평균 점수 {averageScore}점
+        </p>
       </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <StudentList students={filteredStudents} />
+    </main>
   )
 }
 
